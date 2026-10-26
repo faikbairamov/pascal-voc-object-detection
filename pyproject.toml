@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pascal-voc-object-detection"
+version = "0.1.0"
+description = "Reproducible Pascal VOC 2012 object detection experiments"
+requires-python = ">=3.14,<3.15"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+include = ["voc_detection*"]

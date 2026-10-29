@@ -14,7 +14,72 @@ epoch-3 results remain under `reports/evaluation/epoch3_dev` and `epoch3_val`.
 A free Tesla T4 attempt was stopped without a completed scored checkpoint;
 see [cloud attempt](reports/cloud_attempt.md). The selected model was trained locally on MPS.
 
-![Example detection](reports/demo/example.png)
+## See it in action
+
+![FastAPI demo with an uploaded image, confidence slider, bounding box and detection table](reports/demo/app.jpg)
+
+The working local demo accepts a new image, draws labelled boxes, reports confidence
+scores, and lets you download the annotated result. The screenshot shows a VOC
+example at a 0.5 display threshold; it is an illustration, not an additional test score.
+
+## How detection works
+
+```mermaid
+flowchart LR
+    image["RGB image"] --> prep["Resize + normalize<br/>384 / 768 pixels"]
+    prep --> features["MobileNetV3 + FPN"]
+    features --> proposals["RPN<br/>300 proposals"]
+    features --> roi["ROI Align +<br/>prediction heads"]
+    proposals --> roi
+    roi --> post["Score filtering<br/>+ NMS"]
+    post --> detections["Boxes, labels<br/>+ scores"]
+    detections --> interface["FastAPI demo<br/>or CLI + JSON"]
+```
+
+The two ROI inputs are shared image features and proposed regions. Predictions are
+mapped back to original-image pixel coordinates before drawing. COCO pretraining
+is followed by VOC fine-tuning; final inference runs on CPU.
+
+## What improved
+
+![Recorded development mAP comparisons, with baseline and GPU experiments shown under their respective inference settings](reports/figures/experiment_comparison.png)
+
+Both panels use all 1,144 development images, but their inference settings differ:
+the baseline panel uses 320/640 pixels and 150 proposals; the GPU panel uses
+384/768 pixels and 300 proposals. The total gain from 72.92% to 74.94% therefore
+combines training and inference changes. Dots use a clearly zoomed percentage axis.
+The rejected epoch-2 640/1280 trial scored 52.03% and is outside the plotted range;
+see the [complete training table](reports/experiments.csv) and
+[configuration comparisons](reports/technical_report.md#3-experiments-and-decisions).
+Final validation on the separate 5,823-image split scored **74.17%**.
+
+<details>
+<summary>Explore performance across all 20 categories</summary>
+
+![Final model development AP@0.5 by category, with the mean marked at 74.94 percent](reports/figures/dev_per_category.png)
+
+The dashed line is the unweighted mean across categories. Bottles and potted plants
+remain difficult despite the aggregate improvement. These are development scores;
+[validation category scores](reports/evaluation/val/per_category.csv) are reported separately.
+
+![Development precision-recall curves for person, cat, bottle and pottedplant](reports/figures/dev_precision_recall.png)
+
+AP summarizes the precision-recall curve rather than accuracy at one display threshold.
+
+</details>
+
+## Where it still struggles
+
+![The same bottle image with ground-truth boxes on the left and model predictions on the right](reports/figures/readme_error_example.png)
+
+Left: green annotation boxes, dashed for difficult objects. Right: orange predictions
+with confidence at least 0.5. Here, the table bottle is missed while the foreground
+can receives a bottle prediction. This is one illustrative development image, not a
+frequency estimate. In the full development split, the selected model misses
+145 of 160 objects smaller than 32 × 32 original-image pixels at that threshold.
+The [structured error counts](reports/evaluation/dev/error_counts_at_050.csv) and
+[technical report](reports/technical_report.md#4-evaluation-and-errors) quantify the limitations.
+
 
 ## Run the demo
 

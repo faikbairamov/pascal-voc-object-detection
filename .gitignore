@@ -14,3 +14,9 @@ dist/
 *.pth
 *.tar
 VOCdevkit/
+
+outputs/
+.cache/
+
+tmp/
+reports/verification/published_release.json

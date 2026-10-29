@@ -35,9 +35,12 @@ CLASS_TO_ID = {
 }
 
 class VOCDetectionDataset(Dataset):
-    def __init__(self, dataset_dir, split_file):
+    def __init__(self, dataset_dir, split_file, horizontal_flip_prob=0.0):
         self.dataset_dir = Path(dataset_dir)
         self.image_ids = Path(split_file).read_text().splitlines()
+        if not 0 <= horizontal_flip_prob <= 1:
+            raise ValueError("Flip probability must be between 0 and 1.")
+        self.horizontal_flip_prob = horizontal_flip_prob
 
     def __len__(self):
         return len(self.image_ids)
@@ -77,7 +80,12 @@ class VOCDetectionDataset(Dataset):
             "image_id": torch.tensor(index, dtype=torch.int64),
         }
 
-        return to_tensor(image), target
+        tensor = to_tensor(image)
+        if self.horizontal_flip_prob and torch.rand(()) < self.horizontal_flip_prob:
+            tensor = tensor.flip(-1)
+            boxes = target["boxes"]
+            boxes[:, [0, 2]] = image.width - boxes[:, [2, 0]]
+        return tensor, target
 
 def detection_collate_fn(batch):
     images, targets = zip(*batch)

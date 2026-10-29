@@ -33,6 +33,7 @@ def make_loader(config, split, shuffle=False):
     data = VOCDetectionDataset(
         PROJECT_ROOT / config["dataset_dir"],
         PROJECT_ROOT / "splits" / f"{split}.txt",
+        horizontal_flip_prob=config.get("horizontal_flip_prob", 0.0) if split == "train" else 0.0,
     )
     loader = DataLoader(
         data, batch_size=config["batch_size"], shuffle=shuffle,

@@ -1,0 +1,14 @@
+{
+  "objects": 2732,
+  "true_positive": 1908,
+  "missed": 824,
+  "duplicate": 24,
+  "class_confusion": 129,
+  "localization": 297,
+  "background": 138,
+  "ignored_difficult": 73,
+  "small_objects": 160,
+  "small_missed": 145,
+  "confidence_threshold": 0.5,
+  "small_object_definition": "original image box area < 32*32 pixels"
+}

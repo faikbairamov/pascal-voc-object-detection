@@ -1,0 +1,62 @@
+{
+  "selected": {
+    "split": "dev",
+    "images": 1144,
+    "map50": 0.7494341278519066,
+    "evaluation_seconds": 121.8628066250003,
+    "checkpoint_sha256": "43db303aadb6be96aa0159202af7378893b8cb2eb024f6011ad4214c29ed16f8",
+    "source_run": "63411f882d0d45898a5877fa40e2c0c9",
+    "epoch": 7,
+    "rpn_proposals": 300,
+    "min_size": 384,
+    "max_size": 768,
+    "batch_size": 2,
+    "torch_threads": 4,
+    "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+    "torch": "2.14.1",
+    "split_sha256": "68ccf93caf2fdb5c12edeafc96d5dda4ea3001deba10587dc657ad9b4c12efa6",
+    "metric": "VOC all-points interpolated AP, IoU > 0.5; difficult matches ignored"
+  },
+  "ranked_dev_experiments": [
+    {
+      "name": "epoch7_fixed384",
+      "map50": 0.7494341278519066
+    },
+    {
+      "name": "epoch6_multiscale_384",
+      "map50": 0.7485950104690293
+    },
+    {
+      "name": "epoch4_flip_384",
+      "map50": 0.7454515742619257
+    },
+    {
+      "name": "epoch5_multiscale_384",
+      "map50": 0.7453247139218055
+    },
+    {
+      "name": "epoch4_control_384",
+      "map50": 0.74206681662804
+    },
+    {
+      "name": "epoch4_control_384_proposals150",
+      "map50": 0.739041881838016
+    },
+    {
+      "name": "epoch4_flip_448",
+      "map50": 0.738376265927667
+    },
+    {
+      "name": "resolution384_proposals300",
+      "map50": 0.7376569142656135
+    },
+    {
+      "name": "resolution320_proposals300",
+      "map50": 0.7289625541938551
+    },
+    {
+      "name": "proposals75",
+      "map50": 0.7230930479615159
+    }
+  ]
+}

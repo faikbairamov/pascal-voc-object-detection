@@ -1,0 +1,49 @@
+{
+  "architecture": "fasterrcnn_mobilenet_v3_large_320_fpn",
+  "classes": [
+    "aeroplane",
+    "bicycle",
+    "bird",
+    "boat",
+    "bottle",
+    "bus",
+    "car",
+    "cat",
+    "chair",
+    "cow",
+    "diningtable",
+    "dog",
+    "horse",
+    "motorbike",
+    "person",
+    "pottedplant",
+    "sheep",
+    "sofa",
+    "train",
+    "tvmonitor"
+  ],
+  "epoch": 4,
+  "mlflow_run_id": "e2b8addcfefa4639baac52c0bf107851",
+  "source_sha256": "bffa27cbb00451df0cdfdc30e3b89afc61933625008a9087ba2dfbb8d3a44795",
+  "config": {
+    "seed": 42,
+    "batch_size": 2,
+    "learning_rate": 0.0001,
+    "momentum": 0.9,
+    "weight_decay": 0.0005,
+    "device": "mps",
+    "num_classes": 21,
+    "difficult_training_policy": "include",
+    "dataset_dir": "../VOCdevkit/VOC2012",
+    "architecture": "fasterrcnn_mobilenet_v3_large_320_fpn",
+    "horizontal_flip_prob": 0.5
+  },
+  "inference_config": {
+    "min_size": 384,
+    "max_size": 768,
+    "rpn_proposals": 300
+  },
+  "sha256": "337ffd9c3c2956e7433b601dd1ca800cafca0b8875fcffc537e461cc9c50cc97",
+  "bytes": 76420427,
+  "source_bytes": 152329856
+}

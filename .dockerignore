@@ -1,0 +1,7 @@
+*
+!requirements-serving.txt
+!voc_detection/
+!voc_detection/**
+!models/
+!models/best.pt
+**/__pycache__

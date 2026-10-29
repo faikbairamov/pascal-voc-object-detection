@@ -14,3 +14,6 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.packages.find]
 include = ["voc_detection*"]
+
+[tool.setuptools.package-data]
+voc_detection = ["templates/*.html"]

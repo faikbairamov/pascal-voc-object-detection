@@ -1,57 +1,86 @@
 # Pascal VOC 2012 object detection
 
-Fine-tune a COCO-pretrained Faster R-CNN MobileNetV3-Large 320 FPN detector on
-all 20 VOC object categories. The current work includes training, development
-AP evaluation, local MLflow tracking, and visual error analysis.
+An end-to-end CPU object detector: COCO-pretrained Faster R-CNN MobileNetV3-Large
+320 FPN, fine-tuned for the 20 Pascal VOC categories, served through **FastAPI**
+with a browser demo, typed JSON responses, and a tested **Docker** deployment.
 
-## Project layout
+**Held-out validation mAP@0.5: 74.17%** on 5,823 images.
+Development mAP@0.5: **74.94%** on 1,144 images. Both were freshly recomputed
+from the selected exported weights. See [technical report](reports/technical_report.md),
+[experiment table](reports/experiments.csv), and [submission checklist](SUBMISSION.md).
+The selected inference configuration is 384/768 pixels with 300 region proposals.
+Final held-out results are in `reports/evaluation/val/summary.json`. The earlier
+epoch-3 results remain under `reports/evaluation/epoch3_dev` and `epoch3_val`.
+A free Tesla T4 attempt was stopped without a completed scored checkpoint;
+see [cloud attempt](reports/cloud_attempt.md). The selected model was trained locally on MPS.
 
-```text
-configs/baseline.json        Shared paths and baseline hyperparameters
-voc_detection/
-  dataset.py                VOC XML parsing, image tensors, and batching
-  model.py                  Pretrained detector and VOC predictor construction
-  engine.py                 One training epoch and fresh prediction collection
-  metrics.py                VOC AP and difficult/duplicate matching rules
-  evaluation.py             All-category evaluation and summary tables
-  visualization.py          Category-level error inspection
-  project.py                Repository paths, seeds, and loader construction
-  tracking.py               Local MLflow setup and evaluation logging
-notebooks/
-  01_data_exploration.ipynb  Dataset inspection and saved split generation
-  02_sanity_checks.ipynb     Dataset checks and tiny-batch learning checks
-  03_training.ipynb          Explicit new training experiments with epoch checkpoints
-  04_evaluation.ipynb        Reload saved weights, score development, inspect errors
-  archive/                  Original workbook with every saved output preserved
-splits/                     Version-controlled fitting and development image IDs
-reports/baseline.md          Recorded epoch results, error observations, and limitations
-tests/test_metrics.py       Small synthetic evaluator regression checks
-mlflow_local/               Ignored local database, artifacts, and checkpoints
-```
+![Example detection](reports/demo/example.png)
 
-## Environment
+## Run the demo
 
-The existing `.venv` is retained. Its observed Python version is 3.14.8;
-`requirements.txt` pins the direct dependencies actually used locally. These
-versions have not been validated on other platforms. Select the Pascal VOC
-`.venv` kernel in VS Code. Notebooks locate the repository root automatically
-when opened from the root or `notebooks/`; they import reusable code rather
-than redefining the training and metric implementations.
+Download the [complete submission ZIP](https://github.com/faikbairamov/pascal-voc-object-detection/releases/latest/download/pascal-voc-submission.zip), which includes `models/best.pt`. Model binaries are deliberately
+excluded from Git; when using only a GitHub checkout, obtain the supplied weights
+from the accompanying submission ZIP, or follow the training instructions below.
+Verify the file against `models/best.metadata.json` (SHA-256).
 
-For a new environment, from the repository root:
+Use **Python 3.14**. The project was checked on macOS ARM64 and the serving image
+on Linux ARM64. Other platforms have not been verified.
 
 ```bash
-python3 -m venv .venv
+python3.14 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m voc_detection.demo
 ```
 
-Optional package installation: `.venv/bin/python -m pip install -e .`.
-Installation was not performed during reorganization. Restart the notebook kernel
-after editing imported Python modules so stale definitions do not remain in memory.
+Open [the demo](http://127.0.0.1:7860) and upload a JPEG or PNG. The model returns
+an annotated image and a table of detections. Change the confidence slider to
+explore the precision/recall tradeoff. No weights download or dataset is needed
+for inference. The app does not retain uploads; framework upload parsing may use
+temporary files. It processes one model request at a time.
 
-## Data and splits
+For a smaller serving-only environment, install `requirements-serving.txt` instead.
+On Linux, install CPU-only PyTorch first as in the Dockerfile to avoid CUDA packages.
 
-Place the dataset beside this repository:
+```bash
+.venv/bin/python -m voc_detection.inference /path/to/photo.jpg --output outputs/prediction.png
+```
+
+This writes an annotated PNG and a JSON file. Model classes are fixed to VOC;
+objects outside those categories may be missed or misclassified.
+
+## FastAPI and Docker
+
+Interactive API documentation: [Swagger UI](http://127.0.0.1:7860/docs).
+Machine-readable contract: `/openapi.json`. Endpoints:
+
+| Endpoint | Behavior |
+| --- | --- |
+| `GET /` | Browser upload demo |
+| `GET /health` | Model readiness and device |
+| `POST /predict` | Multipart `image` and optional `threshold` (0–1, default 0.5) |
+
+`POST /predict` returns image dimensions, detections (`label`, `class_id`, `score`,
+`box`), model inference time, and an annotated PNG data URL. Boxes are zero-based
+`[xmin, ymin, xmax, ymax]` in original-image pixels, with exclusive end coordinates.
+Invalid image bytes return 400, oversized files 413, and invalid/missing fields 422.
+Limits: 10 MB image bytes and 20 million pixels. This is a local demonstration,
+without authentication or a production serving/load-testing claim.
+
+```bash
+curl -F image=@/path/to/photo.jpg -F threshold=0.5 http://127.0.0.1:7860/predict
+
+docker build -t voc-detector:submission .
+docker run --rm -p 127.0.0.1:7860:7860 voc-detector:submission
+```
+
+The image uses CPU-only PyTorch, runs as an unprivileged user, includes a health
+check, and contains the selected model. Build requires internet; inference does not.
+Container verification evidence: `reports/verification/docker_smoke.json`.
+
+## Data and evaluation protocol
+
+Obtain Pascal VOC **2012 train/val**, not the separate test-image archive, from the
+[VOC project](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/). Extract it beside this repository:
 
 ```text
 workspace/
@@ -59,47 +88,110 @@ workspace/
   pascal-voc-object-detection/
 ```
 
-Change `dataset_dir` in `configs/baseline.json` for another location (paths are
-resolved relative to this repository). Dataset files and TAR archives stay out
-of Git. Keep the existing `splits/train.txt` and `splits/dev.txt` assignments:
-4,573 fitting images and 1,144 development images. The official validation split
-of 5,823 images is reserved for final local evaluation. Official test labels are
-not part of this project.
+Alternatively set `dataset_dir` in `configs/baseline.json`; evaluation and training
+also accept `--dataset /absolute/path/to/VOC2012`. The original fixed scikit-learn
+seed-42 image split is committed: 4,573 fit and 1,144 development images, partitioning
+the official train list. Official val contains 5,823 held-out images. Keep the split
+files unchanged across experiments. All 11,540 images passed decode/annotation and
+split-isolation checks; details are in `reports/data/summary.json`.
 
-## What to open next
+The custom evaluator reports VOC all-points interpolated AP with strict IoU > 0.5.
+It ignores matches to difficult annotations and counts duplicates as false positives.
+It uses all predictions returned by the detector (default internal score threshold,
+NMS and detection cap), without the demo's 0.5 display filter. This is neither
+COCO mAP@[.5:.95] nor an official VOC test-server submission. Exact numerical parity
+with the official devkit has not been independently established.
 
-The completed baseline already has two epochs; do not retrain just to migrate the
-workspace. Start with **`notebooks/04_evaluation.ipynb`** to load its epoch-2
-checkpoint. This notebook does not train or log to MLflow automatically.
-Notebook 03 starts a new model and a new experiment and contains a clearly marked
-training cell. Run initialization again before a fresh experiment, rather than
-rerunning only its training cell on already-updated weights.
+```bash
+.venv/bin/python -m voc_detection.audit
+.venv/bin/python -m voc_detection.evaluate --split dev --output reports/evaluation/dev
+.venv/bin/python -m voc_detection.evaluate --split val --output reports/evaluation/val
+```
 
-Notebook 01 can write split manifests; do not change their seed or assignments
-mid-experiment. Notebook 02 trains only a small temporary sanity-check model.
-The archived workbook is historical reference, not an executable entry point.
+The val result evaluates a frozen model selected on development. Do not tune against
+val. Evaluation saves per-class CSVs, provenance JSON, and ignored `.pt` prediction
+records. The dataset and local records are not necessary for the inference demo.
 
-## Tracking
+## Train or reproduce the approach
 
-Keep the current `mlflow_local/` directory where it is: existing experiment
-artifact locations refer to that directory. From the repository root:
+Training requires the dataset and downloads the TorchVision COCO weights on first
+use. The observed historical CPU epochs took about 16 minutes each. Hardware and
+library versions affect timings and exact reproducibility.
+
+```bash
+# Baseline: two epochs, SGD learning rate 0.001.
+.venv/bin/python -m voc_detection.train --epochs 2
+
+# Use the printed epoch-2 TRAINING checkpoint path in the next command.
+.venv/bin/python -m voc_detection.train --resume /path/to/epoch_2.pt --epochs 1 --lr 0.0001 --restart-shuffle
+
+# Additional selected-model recipe, using the printed checkpoint from each step.
+# MPS means Apple's GPU; use --device cpu on a machine without MPS.
+PYTORCH_ENABLE_MPS_FALLBACK=1 .venv/bin/python -m voc_detection.train --resume /path/to/epoch_3.pt --epochs 1 --lr 0.0001 --device mps --horizontal-flip 0.5 --name mps-epoch4-horizontal-flip
+PYTORCH_ENABLE_MPS_FALLBACK=1 .venv/bin/python -m voc_detection.train --resume /path/to/epoch_4.pt --epochs 2 --device mps --horizontal-flip 0.5 --train-min-sizes 320 384 --train-max-size 768 --name mps-multiscale-continuation
+PYTORCH_ENABLE_MPS_FALLBACK=1 .venv/bin/python -m voc_detection.train --resume /path/to/epoch_6.pt --epochs 1 --device mps --horizontal-flip 0.5 --train-min-sizes 384 --train-max-size 768 --name mps-epoch7-fixed384
+
+# Export the selected epoch-7 weights and the settings chosen on development.
+.venv/bin/python -m voc_detection.export /path/to/epoch_7.pt --min-size 384 --max-size 768 --proposals 300
+```
+
+The original epoch-3 best result came from a continuation of epoch 2 with reset seed-42
+shuffle and learning rate 0.0001. `--restart-shuffle` reproduces that policy. Normal
+resume restores saved Torch/loader RNG state when available; original epoch-1/2
+checkpoints do not contain that state. Resume requires a full training checkpoint,
+not `models/best.pt`. Training preserves TorchVision's pretrained frozen-normalization
+and trainable-backbone policy; offline serving reconstructs weights for evaluation.
+The historical baseline used resizing/normalization only. New selected-model
+continuations use 0.5 horizontal flips, mixed training scales for epochs 5/6,
+and fixed 384-pixel training for epoch 7. CPU development evaluation at 320 is
+logged by the training CLI; separate dev sweeps select deployment at 384/768
+with 300 proposals. Those are distinct evaluation settings and scores.
+
+New runs save model/optimizer/RNG state under `mlflow_local/checkpoints/` and log
+metrics, splits, and checkpoints to local MLflow. The supplied weights let a reviewer
+run the actual selected model without attempting to reproduce its exact score.
 
 ```bash
 .venv/bin/mlflow ui --backend-store-uri sqlite:///mlflow_local/tracking.db --host 127.0.0.1 --port 5000
 ```
 
-Open http://127.0.0.1:5000. Existing run and checkpoint files are preserved.
-The recorded development score rose from 69.84% to 70.66% mAP@0.5 after two epochs;
-see `reports/baseline.md` for protocol and limitations.
+Existing MLflow artifact paths point to their original location; do not move the local
+tracking directory. Portable experiment evidence is exported to `reports/`.
 
-## Checks
-
-Run the small synthetic metric tests without training or downloading weights:
+## Optimization and verification
 
 ```bash
+.venv/bin/python -m voc_detection.evaluate --split dev --proposals 75 --output reports/optimization/proposals75
+.venv/bin/python -m voc_detection.benchmark
+# Optional, isolated legacy dynamic-quantization experiment:
+.venv/bin/python -m voc_detection.quantization
 .venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m voc_detection.smoke /path/to/photo.jpg --url http://127.0.0.1:7860 --output reports/verification/local_smoke.json
 ```
 
-Code, notebooks, configs, splits, tests, and reports belong in Git. Dataset images,
-virtual environments, checkpoints, and local MLflow databases do not. No Git commit
-or push is performed automatically.
+Run latency benchmarks without competing training/evaluation jobs. They warm up each
+setting, alternate execution order, use fixed development images, and report mean,
+median, and p95 forward latency. See the technical report for measured tradeoffs.
+`torch.ao` dynamic quantization is deprecated in the pinned PyTorch version; it is an
+isolated experiment, not a requirement of the supported FP32 inference path.
+
+## Structure
+
+| Path | Purpose |
+| --- | --- |
+| `voc_detection/` | Dataset, model, training, metrics, API, inference, and report tooling |
+| `configs/baseline.json`, `splits/` | Shared baseline and fixed image assignments |
+| `notebooks/01*`, `02*` | Exploration and tiny-batch sanity checks |
+| `notebooks/03*`, `04*` | Recorded training, resolution and learning-rate experiments |
+| `notebooks/archive/` | Original workbook and preserved outputs |
+| `models/best.metadata.json` | Selected model class order, provenance, size and hash |
+| `reports/` | Results, figures, data audit, technical report and verification |
+| `tests/` | Synthetic metric cases and API contract checks |
+| `Dockerfile` | CPU FastAPI serving image |
+
+Training cells in notebooks 03/04 require explicit opt-in flags and default to off;
+saved outputs preserve historical experiments. Notebook 04 loads the historical
+epoch-2 model for its comparisons. Use the CLI and `models/best.pt` for the final model.
+Do not Run All in the archived workbook. Restart kernels after changing Python modules.
+
+AI contributions and how they were checked are documented in [AI use](reports/ai_use.md).

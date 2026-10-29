@@ -1,0 +1,18 @@
+/Users/faikbairamov/Documents/workspace/pascal-voc-object-detection/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+test_augmentation_never_applies_to_dev (test_augmentation.HorizontalFlipTests.test_augmentation_never_applies_to_dev) ... ok
+test_box_and_image_are_flipped_together (test_augmentation.HorizontalFlipTests.test_box_and_image_are_flipped_together) ... ok
+test_home_health_and_openapi (test_demo.DemoContractTests.test_home_health_and_openapi) ... ok
+test_invalid_inputs (test_demo.DemoContractTests.test_invalid_inputs) ... ok
+test_oversized_upload_is_rejected (test_demo.DemoContractTests.test_oversized_upload_is_rejected) ... ok
+test_success_returns_boxes_and_a_valid_image (test_demo.DemoContractTests.test_success_returns_boxes_and_a_valid_image) ... ok
+test_threshold_can_produce_no_detections (test_demo.DemoContractTests.test_threshold_can_produce_no_detections) ... ok
+test_ap_boundaries (test_metrics.VOCMetricTests.test_ap_boundaries) ... ok
+test_exact_threshold_is_not_a_match (test_metrics.VOCMetricTests.test_exact_threshold_is_not_a_match) ... ok
+test_matching_rules (test_metrics.VOCMetricTests.test_matching_rules) ... ok
+test_no_detections (test_metrics.VOCMetricTests.test_no_detections) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.083s
+
+OK

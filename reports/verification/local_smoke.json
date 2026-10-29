@@ -1,0 +1,47 @@
+{
+  "url": "http://127.0.0.1:7860",
+  "health": {
+    "status": "ready",
+    "classes": 20,
+    "device": "cpu",
+    "model_sha256": "f4c5318a5e574007e9473894f277333a302252d7e0f28514499543cbce70cb5c",
+    "source_run": "63411f882d0d45898a5877fa40e2c0c9",
+    "epoch": 7,
+    "inference_config": {
+      "min_size": 384,
+      "max_size": 768,
+      "rpn_proposals": 300
+    }
+  },
+  "real_image": "2007_000033.jpg",
+  "checks": [
+    "health",
+    "docs",
+    "OpenAPI contract",
+    "real-model prediction",
+    "typed response",
+    "valid annotated PNG",
+    "invalid image",
+    "missing image"
+  ],
+  "prediction": {
+    "width": 500,
+    "height": 366,
+    "threshold": 0.5,
+    "inference_seconds": 0.13650829200014414,
+    "detections": [
+      {
+        "label": "aeroplane",
+        "class_id": 1,
+        "score": 0.9979398846626282,
+        "box": [
+          6.512401580810547,
+          108.54847717285156,
+          473.2301330566406,
+          256.8060302734375
+        ]
+      }
+    ],
+    "box_format": "xyxy, zero-based pixel coordinates, exclusive end"
+  }
+}

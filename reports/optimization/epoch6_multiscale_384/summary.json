@@ -1,0 +1,18 @@
+{
+  "split": "dev",
+  "images": 1144,
+  "map50": 0.7485950104690293,
+  "evaluation_seconds": 116.319975333,
+  "checkpoint_sha256": "6e09cd68203e5ac6864962846be0295229e0023ea275cc8febb3d0661acc166e",
+  "source_run": "8c598243065a40afa34b070829ff8b65",
+  "epoch": 6,
+  "rpn_proposals": 300,
+  "min_size": 384,
+  "max_size": 768,
+  "batch_size": 2,
+  "torch_threads": 4,
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "torch": "2.14.1",
+  "split_sha256": "68ccf93caf2fdb5c12edeafc96d5dda4ea3001deba10587dc657ad9b4c12efa6",
+  "metric": "VOC all-points interpolated AP, IoU > 0.5; difficult matches ignored"
+}

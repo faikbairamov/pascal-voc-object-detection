@@ -1,0 +1,20 @@
+{
+  "width": 500,
+  "height": 366,
+  "threshold": 0.5,
+  "inference_seconds": 0.09971320799922978,
+  "detections": [
+    {
+      "label": "aeroplane",
+      "class_id": 1,
+      "score": 0.9979398846626282,
+      "box": [
+        6.512401580810547,
+        108.54847717285156,
+        473.2301330566406,
+        256.8060302734375
+      ]
+    }
+  ],
+  "box_format": "xyxy, zero-based pixel coordinates, exclusive end"
+}

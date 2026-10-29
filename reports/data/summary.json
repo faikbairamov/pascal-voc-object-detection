@@ -1,0 +1,22 @@
+{
+  "images": {
+    "train": 4573,
+    "dev": 1144,
+    "val": 5823
+  },
+  "split_sha256": {
+    "train": "29e14be0693ef363036b04167a055ea72666b2bd9bb2a91a100858587497ad94",
+    "dev": "68ccf93caf2fdb5c12edeafc96d5dda4ea3001deba10587dc657ad9b4c12efa6",
+    "val": "a697c0422085d84ae1c10eab6e6d92e7bcc3a5136b32971a23b9754411f996cb"
+  },
+  "checks": [
+    "unique IDs",
+    "no split ID overlap",
+    "official train partition",
+    "full image decode",
+    "XML dimensions",
+    "known labels",
+    "box bounds"
+  ],
+  "errors": []
+}
